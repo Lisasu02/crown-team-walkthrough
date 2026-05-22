@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CROWN — Team walkthrough · User management & Projects</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Poppins', 'ui-sans-serif', 'system-ui'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace']
+        },
+        colors: {
+          ink: {900:'#1D1D1B',800:'#363633',700:'#4A4A48',600:'#61615F',500:'#787878',400:'#8E8E8E',300:'#AEB0B2',200:'#DBDCDD',100:'#E9EAEC',50:'#F8F8F8'},
+          paper: {50:'#F8F8F8',100:'#F8F8F8',200:'#E9EAEC'},
+          brand: {DEFAULT:'#00CE7C',50:'#EBFFF7',100:'#DDFBEE',200:'#BEF5DF',300:'#A6F0D3',400:'#8EEBC6',500:'#5FE2AE',600:'#2FD895',700:'#00CE7C',800:'#00A563',900:'#007C4A',950:'#005232'},
+          mint: {100:'#DDFBEE',200:'#BEF5DF',300:'#8EEBC6'},
+          brandPurple: {100:'#EDEBFE',200:'#DCD7FE',300:'#CABFFD',400:'#AC94FA',500:'#9061F9',600:'#7E3AF2',700:'#6C2BD9'},
+          brandBlue: {100:'#DFF0FF',200:'#CFE6FF',300:'#C3DDFD',400:'#A4CAFE',500:'#7495D9',600:'#5275BC',700:'#1A49A9'},
+          brandYellow: {100:'#FDFFD2',200:'#FDF6B2',300:'#FCE96A',400:'#F1C537',500:'#E3A008',600:'#C27803'},
+          brandOrange: {100:'#FFF1E3',200:'#FFE1CB',300:'#FFCEB1',400:'#FFA878',500:'#FF6F1F',600:'#E34C0B'},
+          brandRed: {100:'#FDF2F2',200:'#FDE8E8',300:'#FBD5D5',400:'#F8B4B4',500:'#F05252',600:'#E02424'}
+        },
+        boxShadow: {
+          card: '0 1px 2px 0 rgba(29,29,27,0.04), 0 1px 0 0 rgba(29,29,27,0.02)',
+          hero: '0 8px 24px -12px rgba(0,0,0,0.35)'
+        }
+      }
+    }
+  };
+</script>
+<style>
+  body { background:#F8F8F8; font-family:Poppins,ui-sans-serif,system-ui; font-size:14px; color:#1D1D1B; -webkit-font-smoothing:antialiased; }
+  header.site-header { position:static !important; }
+  .num { font-variant-numeric: tabular-nums; }
+  .hairline { box-shadow: inset 0 0 0 1px #E9EAEC; }
+  .hairline-dark { box-shadow: inset 0 0 0 1.5px #1D1D1B; }
+  .crown-mark { font-family:'Arial Black', Arial, sans-serif; letter-spacing:-0.02em; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  .fadeUp { animation: fadeUp .6s ease-out both; }
+  .d-0 { animation-delay:0s } .d-1 { animation-delay:.08s } .d-2 { animation-delay:.16s } .d-3 { animation-delay:.24s }
+  @keyframes pulse { 0%,100% { transform:scale(1); opacity:1 } 50% { transform:scale(1.4); opacity:.5 } }
+  .pulse { animation: pulse 1.8s ease-in-out infinite; }
+  ::-webkit-scrollbar { width:10px; height:10px; }
+  ::-webkit-scrollbar-track { background:#DBDCDD; }
+  ::-webkit-scrollbar-thumb { background:#AEB0B2; border-radius:8px; }
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(29,29,27,0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(29,29,27,0.04) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .text-balance { text-wrap: balance; }
+  /* Role chip — driven by data-bg / data-text / data-dot from utils/roles.js */
+  .role-chip { display:inline-flex; align-items:center; gap:6px; padding:3px 10px 3px 8px; border-radius:999px; font-size:11px; font-weight:600; letter-spacing:.01em; }
+  .role-chip .dot { width:6px; height:6px; border-radius:999px; }
+  /* Slide mode (press F): each .slide becomes a fullscreen card */
+  body.slide-mode { overflow:hidden; }
+  body.slide-mode header.site-header { display:none; }
+  body.slide-mode .slide { display:none; min-height:100vh; padding-top:48px; padding-bottom:48px; }
+  body.slide-mode .slide.active { display:block; }
+  body.slide-mode .slide-controls { display:flex; }
+  .slide-controls { display:none; position:fixed; bottom:18px; left:50%; transform:translateX(-50%); z-index:60; gap:8px; background:#1D1D1B; color:#fff; padding:8px 12px; border-radius:999px; font-family:'JetBrains Mono',monospace; font-size:11px; align-items:center; }
+  .slide-controls button { color:#fff; padding:2px 8px; }
+  .slide-controls button:hover { color:#00CE7C; }
+</style>
+</head>
+<body>
+
+<!-- ====== NAV ====== -->
+<header class="site-header border-t-2 border-b-2 border-ink-900 bg-paper sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <span class="crown-mark text-xl font-black">CR<span class="text-brand">O</span>WN</span>
+      <span class="hidden sm:inline text-[10px] uppercase tracking-[0.2em] text-ink-500 font-mono">Team walkthrough · Users & Projects</span>
+    </div>
+    <nav class="hidden md:flex items-center gap-6 text-[11px] text-ink-600 font-mono uppercase tracking-wider">
+      <a href="#intro" class="hover:text-ink-900">Intro</a>
+      <a href="#users" class="hover:text-ink-900">Users</a>
+      <a href="#roles" class="hover:text-ink-900">Roles</a>
+      <a href="#permissions" class="hover:text-ink-900">Permissions</a>
+      <a href="#project" class="hover:text-ink-900">Project</a>
+      <a href="#events" class="hover:text-ink-900">Events</a>
+      <a href="#flow" class="hover:text-ink-900">Flow</a>
+    </nav>
+    <div class="flex items-center gap-2">
+      <button id="slideToggle" class="text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded hairline hover:bg-white" title="Press F to toggle">Slide mode · F</button>
+    </div>
+  </div>
+</header>
+
+<!-- ====== 01 · INTRO ====== -->
+<section id="intro" class="slide active relative overflow-hidden" data-slide="1">
+  <div class="absolute inset-0 grid-bg opacity-60 pointer-events-none"></div>
+  <div class="relative max-w-7xl mx-auto px-6 pt-20 pb-16">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-end">
+      <div class="lg:col-span-2">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-100 text-brand-950 text-[11px] font-mono uppercase tracking-wider fadeUp d-0">
+          <span class="w-1.5 h-1.5 rounded-full bg-brand pulse"></span>
+          Product task force · Crown demo
+        </div>
+        <h1 class="text-5xl lg:text-[60px] font-bold leading-[1.02] tracking-tight mt-6 fadeUp d-1 text-balance">
+          What we built.
+          <br/><span class="text-brand">How we'll demo it.</span>
+        </h1>
+        <p class="text-lg text-ink-600 mt-6 max-w-2xl fadeUp d-2 text-balance">
+          A quick team session on the work the task force just shipped — user management, projects, events — and how we'll walk a client through it. Goal: everyone leaves able to run the demo themselves.
+        </p>
+        <div class="flex flex-wrap items-center gap-3 mt-8 fadeUp d-3">
+          <a href="#summary" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-ink-900 text-white text-[13px] font-medium hover:bg-ink-800 transition">
+            See the agenda
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
+          <a href="https://demo.crown-procurement.com/" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-medium text-ink-800 hairline hover:bg-white transition">
+            Open demo.crown-procurement.com
+          </a>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl hairline p-6 fadeUp d-3">
+        <div class="text-[10px] uppercase tracking-wider text-ink-500 font-mono">Two pillars</div>
+        <div class="mt-3 space-y-2">
+          <div class="flex items-center justify-between px-3 py-2.5 rounded-md bg-paper hairline">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-ink-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>
+              <span class="text-[13px] font-semibold">Users</span>
+            </div>
+            <span class="text-[10px] font-mono text-ink-400">/users</span>
+          </div>
+          <div class="flex items-center justify-between px-3 py-2.5 rounded-md bg-brand-100 hairline-dark">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-3H5a2 2 0 0 0-2 2z"/></svg>
+              <span class="text-[13px] font-semibold text-brand-950">Projects</span>
+            </div>
+            <span class="text-[10px] font-mono text-brand-900">/projects</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-ink-100 text-[11px] text-ink-500 leading-relaxed">
+          One place to manage <span class="text-ink-900 font-semibold">who</span>, one place to manage <span class="text-ink-900 font-semibold">what</span> they do.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 00 · SUMMARY / AGENDA ====== -->
+<section id="summary" class="slide bg-white border-t-2 border-b-2 border-ink-900" data-slide="2">
+  <div class="max-w-7xl mx-auto px-6 py-16">
+    <div class="flex items-baseline justify-between mb-8">
+      <div>
+        <div class="text-[10px] uppercase tracking-[0.2em] text-ink-400 font-mono">00 · Summary</div>
+        <h2 class="text-3xl font-bold tracking-tight mt-1">What we'll cover today</h2>
+        <p class="text-ink-500 mt-3 max-w-2xl text-[14px]">
+          A guided tour of the two pillars we just shipped. Goal: make sure everyone on the team can demo it, sell it, and answer questions about how it works.
+        </p>
+      </div>
+      <div class="text-[12px] text-ink-500 font-mono uppercase tracking-wider hidden sm:block">12 slides · ~25 min</div>
+    </div>
+
+    <!-- Agenda cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <a href="#users" class="block bg-paper rounded-xl hairline p-6 hover:bg-white transition">
+        <div class="flex items-center justify-between">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-brandBlue-100 text-brandBlue-700 font-mono uppercase tracking-wider">Part 1</span>
+          <span class="text-[10px] font-mono text-ink-400">~7 min</span>
+        </div>
+        <div class="text-[20px] font-semibold mt-3 text-ink-900 leading-tight">User management</div>
+        <ul class="mt-4 space-y-2 text-[12px] text-ink-600">
+          <li class="flex items-start gap-2"><span class="text-brand mt-1">●</span><div>The 6 roles · weights · chip colors from the codebase</div></li>
+          <li class="flex items-start gap-2"><span class="text-brand mt-1">●</span><div>Org chart · buyer-side vs supplier-side</div></li>
+          <li class="flex items-start gap-2"><span class="text-brand mt-1">●</span><div>Permission matrix · who can invite, see, run, award</div></li>
+          <li class="flex items-start gap-2"><span class="text-brand mt-1">●</span><div>Collaborators (Organizer · Viewer) &amp; "View as"</div></li>
+        </ul>
+        <div class="mt-4 pt-4 border-t border-ink-100 text-[10px] font-mono uppercase tracking-wider text-ink-500 flex items-center justify-between">
+          <span>Slides 3 → 6</span>
+          <span class="text-brand-900">Open ↗</span>
+        </div>
+      </a>
+
+      <a href="#project" class="block bg-paper rounded-xl hairline p-6 hover:bg-white transition">
+        <div class="flex items-center justify-between">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-brand-100 text-brand-950 font-mono uppercase tracking-wider">Part 2</span>
+          <span class="text-[10px] font-mono text-ink-400">~10 min</span>
+        </div>
+        <div class="text-[20px] font-semibold mt-3 text-ink-900 leading-tight">Projects &amp; events</div>
+        <ul class="mt-4 space-y-2 text-[12px] text-ink-600">
+          <li class="flex items-start gap-2"><span class="text-brand mt-1">●</span><div>What a Project is · /projects dashboard from a client POV</div></li>
+          <li class="flex items-start gap-2"><span class="text-brand mt-1">●</span><div>The 5 event types · click each to see its config</div></li>
+          <li class="flex items-start gap-2"><span class="text-brand mt-1">●</span><div>Putting it together · the timeline / flow</div></li>
+        </ul>
+        <div class="mt-4 pt-4 border-t border-ink-100 text-[10px] font-mono uppercase tracking-wider text-ink-500 flex items-center justify-between">
+          <span>Slides 7 → 9</span>
+          <span class="text-brand-900">Open ↗</span>
+        </div>
+      </a>
+
+      <a href="#demo" class="block bg-paper rounded-xl hairline-dark p-6 hover:bg-white transition relative">
+        <div class="flex items-center justify-between">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-brand text-white font-mono uppercase tracking-wider">Part 3</span>
+          <span class="text-[10px] font-mono text-ink-400">~8 min</span>
+        </div>
+        <div class="text-[20px] font-semibold mt-3 text-ink-900 leading-tight">Live demo &amp; Q&amp;A</div>
+        <ul class="mt-4 space-y-2 text-[12px] text-ink-600">
+          <li class="flex items-start gap-2"><span class="text-brand mt-1">●</span><div>One small Kiabi project, built live on the platform</div></li>
+          <li class="flex items-start gap-2"><span class="text-brand mt-1">●</span><div>RFQ → Analysis → eAuction → Award → Contract</div></li>
+          <li class="flex items-start gap-2"><span class="text-brand mt-1">●</span><div>You configure it with me, step by step</div></li>
+          <li class="flex items-start gap-2"><span class="text-brand mt-1">●</span><div>Questions, edge cases, what's missing</div></li>
+        </ul>
+        <div class="mt-4 pt-4 border-t border-ink-200 text-[10px] font-mono uppercase tracking-wider text-ink-500 flex items-center justify-between">
+          <span>Slides 10 → 11</span>
+          <span class="text-brand-900">Open ↗</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Frame strip -->
+    <div class="mt-6 bg-ink-900 text-white rounded-xl p-6 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+      <div class="lg:col-span-7">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-brand font-mono">Why this walkthrough</div>
+        <div class="text-[18px] font-semibold mt-2 leading-tight">User management and Projects are the foundation of everything else.</div>
+        <div class="text-[13px] text-ink-300 mt-2 leading-relaxed">Auctions, contracts, GPT — all of it hangs off these two. Once you know how a Project is built and who can do what, the rest of the app reads itself.</div>
+      </div>
+      <div class="lg:col-span-5 grid grid-cols-3 gap-3 text-center">
+        <div><div class="text-[28px] font-bold num">6</div><div class="text-[10px] text-ink-300 uppercase tracking-wider font-mono mt-1">roles</div></div>
+        <div><div class="text-[28px] font-bold num">5</div><div class="text-[10px] text-ink-300 uppercase tracking-wider font-mono mt-1">event types</div></div>
+        <div><div class="text-[28px] font-bold text-brand num">2</div><div class="text-[10px] text-ink-300 uppercase tracking-wider font-mono mt-1">pillars</div></div>
+      </div>
+    </div>
+
+    <div class="mt-4 text-[11px] text-ink-400 font-mono uppercase tracking-wider">Live demo · <a href="https://demo.crown-procurement.com/" target="_blank" class="text-ink-700 underline decoration-brand decoration-2 underline-offset-4">demo.crown-procurement.com</a> · ping me with questions as we go.</div>
+  </div>
+</section>
+
+<!-- ====== 02 · USERS · OVERVIEW ====== -->
+<section id="users" class="slide max-w-7xl mx-auto px-6 py-16" data-slide="3">
+  <div class="flex items-baseline justify-between mb-8">
+    <div>
+      <div class="text-[10px] uppercase tracking-[0.2em] text-ink-400 font-mono">02 · Part 1</div>
+      <h2 class="text-3xl font-bold tracking-tight mt-1">User management</h2>
+      <p class="text-ink-500 mt-3 max-w-2xl text-[14px]">
+        Every workspace has one company tree: a CPO at the top, directors under them, managers under directors, buyers under managers. Suppliers stay outside, invited per project. Six roles, one hierarchy.
+      </p>
+    </div>
+  </div>
+
+  <!-- What is a workspace -->
+  <div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="bg-white rounded-xl hairline p-6 lg:col-span-2">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-brand-100 text-brand-950 font-mono uppercase tracking-wider">First, a workspace</span>
+      </div>
+      <div class="text-[18px] font-semibold mt-3 text-ink-900 leading-tight">One client company = one workspace</div>
+      <p class="text-[13px] text-ink-600 mt-2 leading-relaxed">
+        A <span class="font-semibold text-ink-900">workspace</span> is the isolated Crown environment of a single client company (Kiabi, Decathlon, etc.). It holds <span class="font-semibold text-ink-900">that client's users, org chart, projects, and address book of suppliers</span> — and nothing else. Users from one workspace can never see another workspace's data.
+      </p>
+
+      <div class="mt-5 grid grid-cols-3 gap-2 text-[12px]">
+        <div class="bg-paper rounded p-3 hairline">
+          <div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Inside</div>
+          <div class="font-semibold mt-1">Users &amp; org chart</div>
+          <div class="text-[11px] text-ink-500 mt-0.5">All buyer-side roles for this client.</div>
+        </div>
+        <div class="bg-paper rounded p-3 hairline">
+          <div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Inside</div>
+          <div class="font-semibold mt-1">Projects &amp; events</div>
+          <div class="text-[11px] text-ink-500 mt-0.5">Every sourcing run this client owns.</div>
+        </div>
+        <div class="bg-paper rounded p-3 hairline">
+          <div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Inside</div>
+          <div class="font-semibold mt-1">Supplier book</div>
+          <div class="text-[11px] text-ink-500 mt-0.5">Vendors this client has worked with.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Multi-workspace visual -->
+    <div class="bg-ink-900 text-white rounded-xl p-5">
+      <div class="text-[10px] uppercase tracking-wider font-mono text-brand">Multi-tenant</div>
+      <div class="text-[14px] font-semibold mt-2 leading-tight">Each client gets its own walled-off workspace</div>
+      <div class="space-y-2 mt-4">
+        <div class="flex items-center justify-between px-3 py-2 rounded-md bg-ink-800">
+          <span class="text-[12px] font-semibold">Kiabi</span>
+          <span class="text-[10px] font-mono text-ink-400">workspace</span>
+        </div>
+        <div class="flex items-center justify-between px-3 py-2 rounded-md bg-ink-800">
+          <span class="text-[12px] font-semibold">Decathlon</span>
+          <span class="text-[10px] font-mono text-ink-400">workspace</span>
+        </div>
+        <div class="flex items-center justify-between px-3 py-2 rounded-md bg-ink-800">
+          <span class="text-[12px] font-semibold">Auchan</span>
+          <span class="text-[10px] font-mono text-ink-400">workspace</span>
+        </div>
+      </div>
+      <div class="text-[10px] text-ink-300 mt-4 leading-relaxed">Only <span class="text-brand font-semibold">Super Admin</span> (us) sees across workspaces. Each client only sees their own.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 03 · THE 6 ROLES ====== -->
+<section id="roles" class="slide bg-white border-t-2 border-b-2 border-ink-900" data-slide="3">
+  <div class="max-w-7xl mx-auto px-6 py-16">
+    <div class="flex items-baseline justify-between mb-8">
+      <div>
+        <div class="text-[10px] uppercase tracking-[0.2em] text-ink-400 font-mono">03</div>
+        <h2 class="text-3xl font-bold tracking-tight mt-1">The 6 roles</h2>
+        <p class="text-ink-500 mt-3 max-w-2xl text-[14px]">
+          The chip colors below are the actual chip styles from <span class="font-mono text-ink-900">utils/roles.js</span>. Same colors render everywhere in the app.
+        </p>
+      </div>
+      <div class="text-[12px] text-ink-500 font-mono uppercase tracking-wider hidden sm:block">5 buyer-side · 1 supplier</div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <!-- Super Admin -->
+      <div class="bg-paper rounded-xl hairline p-5">
+        <span class="role-chip" style="background:#1D1D1B;color:#FFFFFF"><span class="dot" style="background:#00CE7C"></span>Super Admin</span>
+        <div class="text-[10px] uppercase tracking-wider font-mono text-ink-400 mt-3">weight 100 · cross-tenant</div>
+        <div class="text-[14px] font-semibold mt-1 text-ink-900">Crown internal</div>
+        <div class="text-[12px] text-ink-500 mt-2 leading-relaxed">Us. Can see every company, switch tenants, impersonate. Outside any client org chart.</div>
+      </div>
+      <!-- Admin -->
+      <div class="bg-paper rounded-xl hairline p-5">
+        <span class="role-chip" style="background:#DFF0FF;color:#1A49A9"><span class="dot" style="background:#5275BC"></span>Admin</span>
+        <div class="text-[10px] uppercase tracking-wider font-mono text-ink-400 mt-3">weight 80 · client root</div>
+        <div class="text-[14px] font-semibold mt-1 text-ink-900">Client admin / CPO</div>
+        <div class="text-[12px] text-ink-500 mt-2 leading-relaxed">Top of the client tree. Invites everyone else. Sees all projects and all users in their company.</div>
+      </div>
+      <!-- Director -->
+      <div class="bg-paper rounded-xl hairline p-5">
+        <span class="role-chip" style="background:#DDFBEE;color:#00A563"><span class="dot" style="background:#00CE7C"></span>Director</span>
+        <div class="text-[10px] uppercase tracking-wider font-mono text-ink-400 mt-3">weight 60</div>
+        <div class="text-[14px] font-semibold mt-1 text-ink-900">Category director</div>
+        <div class="text-[12px] text-ink-500 mt-2 leading-relaxed">Owns a category (Direct or Indirect). Sees all projects under them, runs steering on managers.</div>
+      </div>
+      <!-- Manager -->
+      <div class="bg-paper rounded-xl hairline p-5">
+        <span class="role-chip" style="background:#FFE1CB;color:#9A4515"><span class="dot" style="background:#FF6F1F"></span>Manager</span>
+        <div class="text-[10px] uppercase tracking-wider font-mono text-ink-400 mt-3">weight 40</div>
+        <div class="text-[14px] font-semibold mt-1 text-ink-900">Team lead</div>
+        <div class="text-[12px] text-ink-500 mt-2 leading-relaxed">Runs a buyer team. Creates and runs projects, approves before they go live.</div>
+      </div>
+      <!-- Buyer -->
+      <div class="bg-paper rounded-xl hairline p-5">
+        <span class="role-chip" style="background:#EDEBFE;color:#5A4FAE"><span class="dot" style="background:#9061F9"></span>Buyer</span>
+        <div class="text-[10px] uppercase tracking-wider font-mono text-ink-400 mt-3">weight 20</div>
+        <div class="text-[14px] font-semibold mt-1 text-ink-900">Operational buyer</div>
+        <div class="text-[12px] text-ink-500 mt-2 leading-relaxed">Creates and runs their own projects end to end. Sees their own projects + anything shared with them.</div>
+      </div>
+      <!-- Supplier -->
+      <div class="bg-paper rounded-xl hairline p-5">
+        <span class="role-chip" style="background:#E9EAEC;color:#4A4A48"><span class="dot" style="background:#8E8E8E"></span>Supplier</span>
+        <div class="text-[10px] uppercase tracking-wider font-mono text-ink-400 mt-3">weight 10 · external</div>
+        <div class="text-[14px] font-semibold mt-1 text-ink-900">Bidding company</div>
+        <div class="text-[12px] text-ink-500 mt-2 leading-relaxed">Outside the buyer tree. Sees only projects they're invited to, only their own bids, only their own award letters.</div>
+      </div>
+    </div>
+
+    <div class="mt-6 bg-ink-900 text-white rounded-xl p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+      <div class="lg:col-span-8">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-brand font-mono">Hierarchy rule</div>
+        <div class="text-[18px] font-semibold mt-2 leading-tight">A role can only invite or manage someone with a strictly lower weight.</div>
+        <div class="text-[12px] text-ink-300 mt-2">Director can invite Manager &amp; Buyer. Manager can invite Buyer. Buyer cannot invite anyone.</div>
+      </div>
+      <div class="lg:col-span-4 flex flex-wrap gap-2 justify-end">
+        <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-ink-800 text-ink-200">100</span>
+        <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-ink-800 text-ink-200">80</span>
+        <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-ink-800 text-ink-200">60</span>
+        <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-ink-800 text-ink-200">40</span>
+        <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-ink-800 text-ink-200">20</span>
+        <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-ink-800 text-ink-200">10</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ====== 04 · ORG CHART ====== -->
+<section class="slide max-w-7xl mx-auto px-6 py-16" data-slide="4">
+  <div class="flex items-baseline justify-between mb-8">
+    <div>
+      <div class="text-[10px] uppercase tracking-[0.2em] text-ink-400 font-mono">04</div>
+      <h2 class="text-3xl font-bold tracking-tight mt-1">How the org chart works</h2>
+      <p class="text-ink-500 mt-3 max-w-2xl text-[14px]">
+        A tree, one root, two-way links. Every user has a <span class="font-mono text-ink-900">parent_id</span> (their manager) and a <span class="font-mono text-ink-900">category_id</span>. The chart is just that tree rendered.
+      </p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl hairline p-8 lg:p-10">
+    <!-- Admin -->
+    <div class="flex justify-center">
+      <div class="text-center">
+        <div class="inline-flex flex-col items-center px-6 py-3 rounded-xl bg-ink-900 text-white">
+          <span class="role-chip" style="background:#DFF0FF;color:#1A49A9"><span class="dot" style="background:#5275BC"></span>Admin</span>
+          <div class="text-[14px] font-semibold mt-2">CPO / Client root</div>
+        </div>
+      </div>
+    </div>
+    <!-- Connector · Admin → 2 Directors -->
+    <svg viewBox="0 0 100 32" preserveAspectRatio="none" class="block w-full h-8 max-w-4xl mx-auto" fill="none" stroke="#AEB0B2">
+      <path d="M 50 0 V 16 M 25 16 H 75 M 25 16 V 32 M 75 16 V 32" vector-effect="non-scaling-stroke" stroke-width="1.5"/>
+    </svg>
+
+    <!-- Directors -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-4xl mx-auto">
+      <div class="rounded-lg bg-paper px-4 py-3 hairline">
+        <span class="role-chip" style="background:#DDFBEE;color:#00A563"><span class="dot" style="background:#00CE7C"></span>Director</span>
+        <div class="text-[13px] font-semibold mt-2 text-ink-900">Direct procurement</div>
+        <div class="text-[11px] text-ink-500 mt-0.5">Materials &amp; products</div>
+      </div>
+      <div class="rounded-lg bg-paper px-4 py-3 hairline">
+        <span class="role-chip" style="background:#DDFBEE;color:#00A563"><span class="dot" style="background:#00CE7C"></span>Director</span>
+        <div class="text-[13px] font-semibold mt-2 text-ink-900">Indirect procurement</div>
+        <div class="text-[11px] text-ink-500 mt-0.5">Services &amp; support</div>
+      </div>
+    </div>
+
+    <!-- Connector · 2 Directors → 4 Managers -->
+    <svg viewBox="0 0 100 32" preserveAspectRatio="none" class="block w-full h-8 max-w-4xl mx-auto" fill="none" stroke="#AEB0B2">
+      <path d="M 25 0 V 16 M 12.5 16 H 37.5 M 12.5 16 V 32 M 37.5 16 V 32" vector-effect="non-scaling-stroke" stroke-width="1.5"/>
+      <path d="M 75 0 V 16 M 62.5 16 H 87.5 M 62.5 16 V 32 M 87.5 16 V 32" vector-effect="non-scaling-stroke" stroke-width="1.5"/>
+    </svg>
+
+    <!-- Managers -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-4xl mx-auto">
+      <div class="rounded-lg bg-paper px-3 py-2.5 hairline text-center">
+        <span class="role-chip" style="background:#FFE1CB;color:#9A4515"><span class="dot" style="background:#FF6F1F"></span>Manager</span>
+        <div class="text-[12px] font-medium text-ink-900 mt-1.5">Apparel team</div>
+      </div>
+      <div class="rounded-lg bg-paper px-3 py-2.5 hairline text-center">
+        <span class="role-chip" style="background:#FFE1CB;color:#9A4515"><span class="dot" style="background:#FF6F1F"></span>Manager</span>
+        <div class="text-[12px] font-medium text-ink-900 mt-1.5">Packaging</div>
+      </div>
+      <div class="rounded-lg bg-paper px-3 py-2.5 hairline text-center">
+        <span class="role-chip" style="background:#FFE1CB;color:#9A4515"><span class="dot" style="background:#FF6F1F"></span>Manager</span>
+        <div class="text-[12px] font-medium text-ink-900 mt-1.5">Logistics</div>
+      </div>
+      <div class="rounded-lg bg-paper px-3 py-2.5 hairline text-center">
+        <span class="role-chip" style="background:#FFE1CB;color:#9A4515"><span class="dot" style="background:#FF6F1F"></span>Manager</span>
+        <div class="text-[12px] font-medium text-ink-900 mt-1.5">IT &amp; Stores</div>
+      </div>
+    </div>
+
+    <!-- Connector · 4 Managers → 6 Buyers (2-1-2-1 distribution) -->
+    <svg viewBox="0 0 100 32" preserveAspectRatio="none" class="block w-full h-8 max-w-4xl mx-auto" fill="none" stroke="#AEB0B2">
+      <!-- Apparel (12.5) → Buyer 1 (8.33) + Buyer 2 (25) -->
+      <path d="M 12.5 0 V 16 M 8.33 16 H 25 M 8.33 16 V 32 M 25 16 V 32" vector-effect="non-scaling-stroke" stroke-width="1.5"/>
+      <!-- Packaging (37.5) → Buyer 3 (41.67) -->
+      <path d="M 37.5 0 V 16 H 41.67 V 32" vector-effect="non-scaling-stroke" stroke-width="1.5"/>
+      <!-- Logistics (62.5) → Buyer 4 (58.33) + Buyer 5 (75) -->
+      <path d="M 62.5 0 V 16 M 58.33 16 H 75 M 58.33 16 V 32 M 75 16 V 32" vector-effect="non-scaling-stroke" stroke-width="1.5"/>
+      <!-- IT (87.5) → Buyer 6 (91.67) -->
+      <path d="M 87.5 0 V 16 H 91.67 V 32" vector-effect="non-scaling-stroke" stroke-width="1.5"/>
+    </svg>
+
+    <!-- Buyers -->
+    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 max-w-4xl mx-auto">
+      <div class="rounded-md bg-white hairline px-2 py-2 text-center"><span class="role-chip" style="background:#EDEBFE;color:#5A4FAE"><span class="dot" style="background:#9061F9"></span>Buyer</span></div>
+      <div class="rounded-md bg-white hairline px-2 py-2 text-center"><span class="role-chip" style="background:#EDEBFE;color:#5A4FAE"><span class="dot" style="background:#9061F9"></span>Buyer</span></div>
+      <div class="rounded-md bg-white hairline px-2 py-2 text-center"><span class="role-chip" style="background:#EDEBFE;color:#5A4FAE"><span class="dot" style="background:#9061F9"></span>Buyer</span></div>
+      <div class="rounded-md bg-white hairline px-2 py-2 text-center"><span class="role-chip" style="background:#EDEBFE;color:#5A4FAE"><span class="dot" style="background:#9061F9"></span>Buyer</span></div>
+      <div class="rounded-md bg-white hairline px-2 py-2 text-center"><span class="role-chip" style="background:#EDEBFE;color:#5A4FAE"><span class="dot" style="background:#9061F9"></span>Buyer</span></div>
+      <div class="rounded-md bg-white hairline px-2 py-2 text-center"><span class="role-chip" style="background:#EDEBFE;color:#5A4FAE"><span class="dot" style="background:#9061F9"></span>Buyer</span></div>
+    </div>
+
+    <div class="mt-8 pt-8 border-t border-ink-100 grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="rounded-lg bg-ink-50 px-4 py-3 hairline">
+        <div class="text-[10px] uppercase tracking-wider font-mono text-ink-500">Outside the tree</div>
+        <div class="flex items-center gap-2 mt-1"><span class="role-chip" style="background:#1D1D1B;color:#FFFFFF"><span class="dot" style="background:#00CE7C"></span>Super Admin</span></div>
+        <div class="text-[11px] text-ink-500 mt-1.5">Cross-tenant. Us. Doesn't belong to any client company.</div>
+      </div>
+      <div class="rounded-lg bg-ink-50 px-4 py-3 hairline">
+        <div class="text-[10px] uppercase tracking-wider font-mono text-ink-500">External tree</div>
+        <div class="flex items-center gap-2 mt-1"><span class="role-chip" style="background:#E9EAEC;color:#4A4A48"><span class="dot" style="background:#8E8E8E"></span>Supplier</span></div>
+        <div class="text-[11px] text-ink-500 mt-1.5">Their own company, their own users. Joined to the buyer only via project invitations.</div>
+      </div>
+      <div class="rounded-lg bg-ink-50 px-4 py-3 hairline">
+        <div class="text-[10px] uppercase tracking-wider font-mono text-ink-500">View</div>
+        <div class="text-[13px] font-semibold mt-1 text-ink-900">Org chart · /users</div>
+        <div class="text-[11px] text-ink-500 mt-1.5">Toggle between list and tree from the page header. Click a node to open the profile.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 05 · PERMISSIONS MATRIX ====== -->
+<section id="permissions" class="slide bg-white border-t-2 border-b-2 border-ink-900" data-slide="5">
+  <div class="max-w-7xl mx-auto px-6 py-16">
+    <div class="flex items-baseline justify-between mb-8">
+      <div>
+        <div class="text-[10px] uppercase tracking-[0.2em] text-ink-400 font-mono">05</div>
+        <h2 class="text-3xl font-bold tracking-tight mt-1">Who can do what · who sees what</h2>
+        <p class="text-ink-500 mt-3 max-w-2xl text-[14px]">
+          Read the table left to right. <span class="text-brand-900 font-semibold">●</span> = full, <span class="text-brandYellow-600 font-semibold">◐</span> = scoped, — = none.
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl hairline overflow-hidden">
+      <div class="overflow-x-auto">
+      <table class="w-full text-[12px]">
+        <thead class="bg-paper text-[10px] uppercase tracking-wider font-mono text-ink-500">
+          <tr>
+            <th class="text-left px-4 py-3 font-medium">Role</th>
+            <th class="text-left px-4 py-3 font-medium">Invite users</th>
+            <th class="text-left px-4 py-3 font-medium">See users</th>
+            <th class="text-left px-4 py-3 font-medium">Create project</th>
+            <th class="text-left px-4 py-3 font-medium">See projects</th>
+            <th class="text-left px-4 py-3 font-medium">Run events</th>
+            <th class="text-left px-4 py-3 font-medium">Award</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-t border-ink-100 bg-ink-50">
+            <td class="px-4 py-3"><span class="role-chip" style="background:#1D1D1B;color:#FFFFFF"><span class="dot" style="background:#00CE7C"></span>Super Admin</span></td>
+            <td class="px-4 py-3 text-ink-700 italic" colspan="6">Doesn't act in the workspace directly — uses <span class="font-semibold not-italic text-ink-900">"View as"</span> to impersonate any role (Admin, Director, Manager, Buyer, Supplier) on any tenant.</td>
+          </tr>
+          <tr class="border-t border-ink-100">
+            <td class="px-4 py-3"><span class="role-chip" style="background:#DFF0FF;color:#1A49A9"><span class="dot" style="background:#5275BC"></span>Admin</span></td>
+            <td class="px-4 py-3 text-brand-900 font-semibold">● own company</td>
+            <td class="px-4 py-3 text-brand-900 font-semibold">● own company</td>
+            <td class="px-4 py-3 text-brand-900 font-semibold">●</td>
+            <td class="px-4 py-3 text-brand-900 font-semibold">● own company</td>
+            <td class="px-4 py-3 text-brand-900 font-semibold">●</td>
+            <td class="px-4 py-3 text-brand-900 font-semibold">● final approver</td>
+          </tr>
+          <tr class="border-t border-ink-100">
+            <td class="px-4 py-3"><span class="role-chip" style="background:#DDFBEE;color:#00A563"><span class="dot" style="background:#00CE7C"></span>Director</span></td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ Manager + Buyer</td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ own category</td>
+            <td class="px-4 py-3 text-brand-900 font-semibold">●</td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ own category</td>
+            <td class="px-4 py-3 text-brand-900 font-semibold">●</td>
+            <td class="px-4 py-3 text-brand-900 font-semibold">● approves</td>
+          </tr>
+          <tr class="border-t border-ink-100">
+            <td class="px-4 py-3"><span class="role-chip" style="background:#FFE1CB;color:#9A4515"><span class="dot" style="background:#FF6F1F"></span>Manager</span></td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ Buyer only</td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ own team</td>
+            <td class="px-4 py-3 text-brand-900 font-semibold">●</td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ own team</td>
+            <td class="px-4 py-3 text-brand-900 font-semibold">●</td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ recommends</td>
+          </tr>
+          <tr class="border-t border-ink-100">
+            <td class="px-4 py-3"><span class="role-chip" style="background:#EDEBFE;color:#5A4FAE"><span class="dot" style="background:#9061F9"></span>Buyer</span></td>
+            <td class="px-4 py-3 text-ink-400">—</td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ self only</td>
+            <td class="px-4 py-3 text-brand-900 font-semibold">●</td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ own + shared</td>
+            <td class="px-4 py-3 text-brand-900 font-semibold">●</td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ recommends</td>
+          </tr>
+          <tr class="border-t border-ink-100 bg-brand-50">
+            <td class="px-4 py-3"><span class="role-chip" style="background:#E9EAEC;color:#4A4A48"><span class="dot" style="background:#8E8E8E"></span>Supplier</span></td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ own colleagues</td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ own company</td>
+            <td class="px-4 py-3 text-ink-400">—</td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ invited only</td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ respond &amp; bid</td>
+            <td class="px-4 py-3 text-brandYellow-600 font-semibold">◐ own lots only</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="bg-paper rounded-xl hairline p-5">
+        <div class="text-[10px] uppercase tracking-wider font-mono text-ink-500">Two collaborator-level roles (per project)</div>
+        <div class="text-[14px] font-semibold mt-2 text-ink-900">Organizer · Viewer</div>
+        <div class="text-[12px] text-ink-500 mt-1.5 leading-relaxed">On top of the company role, any user can be added to a specific project as <span class="font-semibold text-ink-900">Organizer</span> (edit) or <span class="font-semibold text-ink-900">Viewer</span> (read-only). Lets a Director jump into a Buyer's project without owning it.</div>
+      </div>
+      <div class="bg-paper rounded-xl hairline p-5">
+        <div class="text-[10px] uppercase tracking-wider font-mono text-ink-500">"View as" (Super Admin &amp; Admin)</div>
+        <div class="text-[14px] font-semibold mt-2 text-ink-900">Impersonate from the header</div>
+        <div class="text-[12px] text-ink-500 mt-1.5 leading-relaxed">
+          <span class="font-semibold text-ink-900">Super Admin</span> can view as any user across any tenant.
+          <span class="font-semibold text-ink-900">Admin</span> can view as any user inside their own client company — to debug "what does this Buyer / Manager actually see?" without logging out. A banner stays on screen while active.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 06 · PROJECT — INTRO ====== -->
+<section id="project" class="slide max-w-7xl mx-auto px-6 py-16" data-slide="6">
+  <div class="flex items-baseline justify-between mb-8">
+    <div>
+      <div class="text-[10px] uppercase tracking-[0.2em] text-ink-400 font-mono">06 · Part 2</div>
+      <h2 class="text-3xl font-bold tracking-tight mt-1">What is a Project</h2>
+      <p class="text-ink-500 mt-3 max-w-2xl text-[14px]">
+        A <span class="font-semibold text-ink-900">Project</span> is the container of one sourcing initiative. It has an owner, a category, a currency, a status, and a sequence of <span class="font-semibold text-ink-900">Events</span> that move it from draft to signed contract.
+      </p>
+    </div>
+  </div>
+
+  <!-- Project dashboard mock · from a client user POV -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-[10px] uppercase tracking-wider font-mono text-ink-500">What a client user sees · /projects</span>
+      <span class="text-[10px] px-2 py-0.5 rounded-md bg-paper hairline font-mono text-ink-500">Role: Manager (own team)</span>
+    </div>
+    <div class="bg-paper rounded-xl hairline p-4 lg:p-5">
+      <div class="bg-white rounded-lg hairline overflow-hidden">
+        <!-- App-style header -->
+        <div class="px-5 py-3 border-b border-ink-100 flex items-center justify-between gap-3 flex-wrap">
+          <div class="flex items-center gap-2">
+            <span class="text-[18px] font-bold text-ink-900">Procurement Projects</span>
+            <span class="inline-flex items-center justify-center min-w-[22px] h-[20px] px-1.5 rounded-md bg-ink-100 text-[11px] font-semibold text-ink-700 num">3</span>
+          </div>
+          <div class="flex items-center gap-2 flex-1 max-w-md min-w-[160px]">
+            <div class="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-lg hairline bg-paper text-[12px] text-ink-400">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              Search projects, owners, companies
+            </div>
+          </div>
+          <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-ink-900 text-white text-[12px] font-medium">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            New Project
+          </div>
+        </div>
+        <!-- Status pills -->
+        <div class="px-5 py-3 border-b border-ink-100 flex items-center gap-1.5 flex-wrap">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-ink-900 text-white text-[11px] font-medium">All <span class="opacity-60 num">3</span></span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full hairline text-ink-600 text-[11px]">In progress <span class="text-ink-400 num">3</span></span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full hairline text-ink-600 text-[11px]">Completed <span class="text-ink-400 num">0</span></span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full hairline text-ink-600 text-[11px]">Archived <span class="text-ink-400 num">0</span></span>
+        </div>
+        <!-- Table head -->
+        <div class="hidden md:grid grid-cols-12 gap-3 px-5 py-2.5 border-b border-ink-100 text-[12px] text-ink-500">
+          <div class="col-span-3 flex items-center gap-1">Project <span class="text-ink-300 text-[10px] leading-none">↑↓</span></div>
+          <div class="col-span-2 flex items-center gap-1">Current event <span class="text-ink-300 text-[10px] leading-none">↑↓</span></div>
+          <div class="col-span-2 flex items-center gap-1">Next deadline <span class="text-ink-300 text-[10px] leading-none">↑↓</span></div>
+          <div class="col-span-2 flex items-center gap-1">Owner <span class="text-ink-300 text-[10px] leading-none">↑↓</span></div>
+          <div class="col-span-1 flex items-center gap-1">Suppliers <span class="text-ink-300 text-[10px] leading-none">↑↓</span></div>
+          <div class="col-span-2 flex items-center gap-1">Status <span class="text-ink-300 text-[10px] leading-none">↑↓</span></div>
+        </div>
+        <!-- Rows -->
+        <div class="divide-y divide-ink-100">
+          <!-- Row 1 · Hangers refresh · Contract -->
+          <div class="grid grid-cols-12 gap-3 px-5 py-3.5 items-center hover:bg-paper">
+            <div class="col-span-12 md:col-span-3 text-[13px] font-semibold text-ink-900">Hangers refresh</div>
+            <div class="col-span-6 md:col-span-2"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium" style="background:#FBCFE8;color:#9D174D">Contract</span></div>
+            <div class="col-span-6 md:col-span-2 text-[12px] text-ink-700 num">May 28, 2026</div>
+            <div class="col-span-6 md:col-span-2 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold" style="background:#BEF5DF;color:#005232">DD</span>
+              <span class="text-[12px] text-ink-700">Diana Direct</span>
+            </div>
+            <div class="col-span-3 md:col-span-1 flex items-center gap-1 text-[12px] num text-ink-700">
+              <svg class="w-3 h-3 text-ink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>3
+            </div>
+            <div class="col-span-9 md:col-span-2 flex items-center justify-between">
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] bg-brand-100 text-brand-950"><span class="w-1.5 h-1.5 rounded-full bg-brand"></span>In progress</span>
+              <div class="flex items-center gap-2 text-ink-300">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span class="leading-none">⋯</span>
+              </div>
+            </div>
+          </div>
+          <!-- Row 2 · Store Furniture · eAuction -->
+          <div class="grid grid-cols-12 gap-3 px-5 py-3.5 items-center hover:bg-paper">
+            <div class="col-span-12 md:col-span-3 text-[13px] font-semibold text-ink-900">Store Furniture</div>
+            <div class="col-span-6 md:col-span-2"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium" style="background:#FFE1CB;color:#9A4515">eAuction</span></div>
+            <div class="col-span-6 md:col-span-2 text-[12px] text-ink-700 num">May 25, 2026</div>
+            <div class="col-span-6 md:col-span-2 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold" style="background:#BEF5DF;color:#005232">DD</span>
+              <span class="text-[12px] text-ink-700">Diana Direct</span>
+            </div>
+            <div class="col-span-3 md:col-span-1 flex items-center gap-1 text-[12px] num text-ink-700">
+              <svg class="w-3 h-3 text-ink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>2
+            </div>
+            <div class="col-span-9 md:col-span-2 flex items-center justify-between">
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] bg-brand-100 text-brand-950"><span class="w-1.5 h-1.5 rounded-full bg-brand"></span>In progress</span>
+              <div class="flex items-center gap-2 text-ink-300">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span class="leading-none">⋯</span>
+              </div>
+            </div>
+          </div>
+          <!-- Row 3 · France inbound transport · RFP -->
+          <div class="grid grid-cols-12 gap-3 px-5 py-3.5 items-center hover:bg-paper">
+            <div class="col-span-12 md:col-span-3 text-[13px] font-semibold text-ink-900">France inbound transport</div>
+            <div class="col-span-6 md:col-span-2"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium" style="background:#DCD7FE;color:#5A4FAE">RFP</span></div>
+            <div class="col-span-6 md:col-span-2 text-[12px] text-ink-700 num">May 28, 2026</div>
+            <div class="col-span-6 md:col-span-2 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold" style="background:#BEF5DF;color:#005232">DD</span>
+              <span class="text-[12px] text-ink-700">Diana Direct</span>
+            </div>
+            <div class="col-span-3 md:col-span-1 flex items-center gap-1 text-[12px] num text-ink-700">
+              <svg class="w-3 h-3 text-ink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>3
+            </div>
+            <div class="col-span-9 md:col-span-2 flex items-center justify-between">
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] bg-brand-100 text-brand-950"><span class="w-1.5 h-1.5 rounded-full bg-brand"></span>In progress</span>
+              <div class="flex items-center gap-2 text-ink-300">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span class="leading-none">⋯</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="text-[11px] text-ink-500 mt-3 leading-relaxed max-w-3xl">
+      <span class="font-semibold text-ink-900">What the user does here:</span> filter by status, search, open a project, or hit <span class="font-mono text-ink-900">New Project</span>. The list is scoped to what the role is allowed to see — a Buyer sees their own + shared, a Manager sees their team, a Director sees their category, an Admin sees the whole company.
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="bg-white rounded-xl hairline p-6 lg:col-span-2">
+      <div class="text-[10px] uppercase tracking-wider text-ink-500 font-mono">Anatomy of a project</div>
+      <div class="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-[12px]">
+        <div class="bg-paper rounded p-3 hairline"><div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Name</div><div class="font-semibold mt-1">Free text</div></div>
+        <div class="bg-paper rounded p-3 hairline"><div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Owner</div><div class="font-semibold mt-1">Creator's profile</div></div>
+        <div class="bg-paper rounded p-3 hairline"><div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Currency</div><div class="font-semibold mt-1">USD · EUR · GBP · UAH</div></div>
+        <div class="bg-paper rounded p-3 hairline"><div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Collaborators</div><div class="font-semibold mt-1">Organizers + Viewers</div></div>
+        <div class="bg-paper rounded p-3 hairline"><div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Suppliers</div><div class="font-semibold mt-1">Invited per event</div></div>
+        <div class="bg-paper rounded p-3 hairline"><div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Events</div><div class="font-semibold mt-1">N × any of 5 types</div></div>
+        <div class="bg-paper rounded p-3 hairline"><div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Project timeline</div><div class="font-semibold mt-1">Indicative roadmap</div></div>
+      </div>
+    </div>
+
+    <div class="bg-ink-900 text-white rounded-xl p-6">
+      <div class="text-[10px] uppercase tracking-wider text-brand font-mono">Where</div>
+      <div class="text-[16px] font-semibold mt-2">/projects</div>
+      <div class="text-[12px] text-ink-300 mt-2 leading-relaxed">List view with status filters (All · Draft · In progress · Completed · Archived). Search by name, owner, company. "New project" button top right.</div>
+      <div class="mt-4 pt-4 border-t border-ink-800">
+        <div class="text-[10px] uppercase tracking-wider text-brand font-mono">Who can create</div>
+        <div class="text-[13px] font-semibold mt-1">All buyer-side roles</div>
+        <div class="text-[11px] text-ink-300 mt-1">Admin, Director, Manager, Buyer. Not Supplier.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Project statuses -->
+  <div class="mt-6 bg-white rounded-xl hairline p-6">
+    <div class="text-[10px] uppercase tracking-wider font-mono text-ink-500 mb-4">Project lifecycle · 3 statuses</div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div class="rounded-lg bg-paper p-4 hairline"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:#00CE7C"></span><span class="text-[12px] font-semibold">In progress</span></div><div class="text-[11px] text-ink-500 mt-1">At least one event live.</div></div>
+      <div class="rounded-lg bg-paper p-4 hairline"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:#5275BC"></span><span class="text-[12px] font-semibold">Completed</span></div><div class="text-[11px] text-ink-500 mt-1">Last event closed (not necessarily the contract).</div></div>
+      <div class="rounded-lg bg-paper p-4 hairline"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:#8E8E8E"></span><span class="text-[12px] font-semibold">Archived</span></div><div class="text-[11px] text-ink-500 mt-1">Removed from main list.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 08 · EVENT TYPES ====== -->
+<section id="events" class="slide max-w-7xl mx-auto px-6 py-16" data-slide="8">
+  <div class="flex items-baseline justify-between mb-8">
+    <div>
+      <div class="text-[10px] uppercase tracking-[0.2em] text-ink-400 font-mono">07</div>
+      <h2 class="text-3xl font-bold tracking-tight mt-1">The 5 event types</h2>
+      <p class="text-ink-500 mt-3 max-w-2xl text-[14px]">
+        Each event is a step in the project. Pick a type, configure it, run it, close it. A project can have <span class="font-semibold text-ink-900">any number of events in any order</span> — RFX → Analysis → eAuction → Award → Contract is just the typical flow. You can also <span class="font-semibold text-ink-900">start a project directly with RFX, Analysis, or eAuction</span>. Award and Contract are decision steps — they depend on an upstream event.
+      </p>
+    </div>
+    <div class="text-[12px] text-ink-500 font-mono uppercase tracking-wider hidden sm:block">From <code>PROJECT_EVENT_TYPES</code></div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+
+    <!-- RFX -->
+    <div class="bg-white rounded-xl hairline p-5">
+      <div class="flex items-center justify-between">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-brandBlue-100 text-brandBlue-700 font-mono uppercase tracking-wider">Sourcing</span>
+        <div class="text-[10px] font-mono text-ink-400 num">01</div>
+      </div>
+      <div class="text-[16px] font-semibold mt-3 text-ink-900 flex items-center gap-2">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        RFX
+      </div>
+      <div class="text-[12px] text-ink-500 mt-1.5 leading-relaxed">Request document, with 3 subtypes the buyer picks inside the builder:</div>
+      <div class="mt-3 space-y-1.5">
+        <div class="flex items-center justify-between bg-paper rounded px-2.5 py-1.5 hairline"><span class="text-[12px] font-semibold">RFI</span><span class="text-[10px] text-ink-500">Request for Information</span></div>
+        <div class="flex items-center justify-between bg-paper rounded px-2.5 py-1.5 hairline"><span class="text-[12px] font-semibold">RFQ</span><span class="text-[10px] text-ink-500">Request for Quote</span></div>
+        <div class="flex items-center justify-between bg-paper rounded px-2.5 py-1.5 hairline"><span class="text-[12px] font-semibold">RFP</span><span class="text-[10px] text-ink-500">Request for Proposal</span></div>
+      </div>
+      <div class="text-[11px] text-ink-500 mt-3 flex items-center justify-between"><span><span class="font-semibold text-ink-900">Supplier sees it:</span> yes</span></div>
+    </div>
+
+    <!-- Analysis -->
+    <div class="bg-white rounded-xl hairline p-5">
+      <div class="flex items-center justify-between">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-brandPurple-100 text-brandPurple-700 font-mono uppercase tracking-wider">Internal</span>
+        <div class="text-[10px] font-mono text-ink-400 num">02</div>
+      </div>
+      <div class="text-[16px] font-semibold mt-3 text-ink-900 flex items-center gap-2">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+        Analysis
+      </div>
+      <div class="text-[12px] text-ink-500 mt-1.5 leading-relaxed">Internal bid scoring. Pick criteria, weight them, compare suppliers side by side. Crown GPT can summarize and flag outliers.</div>
+      <div class="mt-3 flex flex-wrap gap-1.5">
+        <span class="text-[10px] px-1.5 py-0.5 rounded bg-paper hairline font-mono">Weighted score</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded bg-paper hairline font-mono">Side-by-side</span>
+      </div>
+      <div class="text-[11px] text-ink-500 mt-3 flex items-center justify-between"><span><span class="font-semibold text-brandRed-600">Supplier sees it:</span> no</span></div>
+    </div>
+
+    <!-- eAuction -->
+    <div class="bg-white rounded-xl hairline p-5">
+      <div class="flex items-center justify-between">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-brand-100 text-brand-950 font-mono uppercase tracking-wider">Live</span>
+        <div class="text-[10px] font-mono text-ink-400 num">03</div>
+      </div>
+      <div class="text-[16px] font-semibold mt-3 text-ink-900 flex items-center gap-2">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m14 13-7.5 7.5a2.12 2.12 0 0 1-3-3L11 10"/><path d="m16 16 6-6"/><path d="m8 8 6-6"/><path d="m9 7 8 8"/></svg>
+        eAuction
+      </div>
+      <div class="text-[12px] text-ink-500 mt-1.5 leading-relaxed">Live auction with the qualified suppliers. Five formats supported:</div>
+      <div class="mt-3 grid grid-cols-2 gap-1">
+        <span class="text-[10px] px-1.5 py-1 rounded bg-paper hairline text-center">Dutch</span>
+        <span class="text-[10px] px-1.5 py-1 rounded bg-paper hairline text-center">English</span>
+        <span class="text-[10px] px-1.5 py-1 rounded bg-paper hairline text-center">Sealed</span>
+        <span class="text-[10px] px-1.5 py-1 rounded bg-paper hairline text-center">Japanese</span>
+        <span class="text-[10px] px-1.5 py-1 rounded bg-paper hairline text-center col-span-2">Double Scenario</span>
+      </div>
+      <div class="text-[11px] text-ink-500 mt-3 flex items-center justify-between"><span><span class="font-semibold text-ink-900">Supplier sees it:</span> yes</span></div>
+    </div>
+
+    <!-- Award -->
+    <div class="bg-white rounded-xl hairline p-5">
+      <div class="flex items-center justify-between">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-brandYellow-100 text-brandYellow-600 font-mono uppercase tracking-wider">Decision</span>
+        <div class="text-[10px] font-mono text-ink-400 num">04</div>
+      </div>
+      <div class="text-[16px] font-semibold mt-3 text-ink-900 flex items-center gap-2">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+        Award
+      </div>
+      <div class="text-[12px] text-ink-500 mt-1.5 leading-relaxed">Final allocation. Single supplier or split across multiple. Justification text, automatic winner/loser notifications.</div>
+      <div class="mt-3 flex flex-wrap gap-1.5">
+        <span class="text-[10px] px-1.5 py-0.5 rounded bg-paper hairline font-mono">Single</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded bg-paper hairline font-mono">Split</span>
+      </div>
+      <div class="text-[11px] text-ink-500 mt-3 flex items-center justify-between"><span><span class="font-semibold text-ink-900">Supplier sees it:</span> own lots</span></div>
+    </div>
+
+    <!-- Contract -->
+    <div class="bg-white rounded-xl hairline p-5">
+      <div class="flex items-center justify-between">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-brandPurple-100 text-brandPurple-700 font-mono uppercase tracking-wider">Close</span>
+        <div class="text-[10px] font-mono text-ink-400 num">05</div>
+      </div>
+      <div class="text-[16px] font-semibold mt-3 text-ink-900 flex items-center gap-2">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="m9 15 2 2 4-4"/></svg>
+        Contract signature
+      </div>
+      <div class="text-[12px] text-ink-500 mt-1.5 leading-relaxed">Pre-filled from the award. Upload the externally signed PDF, status flips to <span class="font-semibold text-ink-900">Signed</span>, project to <span class="font-semibold text-ink-900">Completed</span>.</div>
+      <div class="text-[11px] text-ink-500 mt-3 flex items-center justify-between"><span><span class="font-semibold text-ink-900">Supplier sees it:</span> yes</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ====== 09 · TIMELINE / FLOW ====== -->
+<section id="flow" class="slide bg-white border-t-2 border-b-2 border-ink-900" data-slide="9">
+  <div class="max-w-7xl mx-auto px-6 py-16">
+    <div class="flex items-baseline justify-between mb-8">
+      <div>
+        <div class="text-[10px] uppercase tracking-[0.2em] text-ink-400 font-mono">08</div>
+        <h2 class="text-3xl font-bold tracking-tight mt-1">Putting it together · the project flow</h2>
+        <p class="text-ink-500 mt-3 max-w-2xl text-[14px]">
+          Typical sequence inside a project. Events have their own statuses (draft → live → closed/signed); the project's timeline reflects them in order.
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-paper rounded-xl hairline p-6 lg:p-8">
+      <div class="bg-white rounded-lg hairline p-6">
+        <div class="text-[10px] uppercase tracking-wider font-mono text-ink-500 mb-4">Project timeline · sample sequence</div>
+        <div class="relative">
+          <div class="absolute left-0 right-0 top-3 h-px bg-ink-200"></div>
+          <div class="absolute left-0 top-3 h-px bg-brand" style="width:60%"></div>
+          <div class="grid grid-cols-5 relative">
+            <div class="flex flex-col items-center">
+              <div class="w-6 h-6 rounded-full bg-brand flex items-center justify-center text-white"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></div>
+              <div class="text-[11px] font-semibold text-ink-900 mt-2">RFX</div>
+              <div class="text-[9px] font-mono text-ink-400 uppercase tracking-wider mt-0.5">RFP · closed</div>
+            </div>
+            <div class="flex flex-col items-center">
+              <div class="w-6 h-6 rounded-full bg-brand flex items-center justify-center text-white"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></div>
+              <div class="text-[11px] font-semibold text-ink-900 mt-2">Analysis</div>
+              <div class="text-[9px] font-mono text-ink-400 uppercase tracking-wider mt-0.5">closed</div>
+            </div>
+            <div class="flex flex-col items-center">
+              <div class="w-7 h-7 rounded-full bg-brand-100 hairline-dark flex items-center justify-center"><div class="w-3 h-3 rounded-full bg-brand pulse"></div></div>
+              <div class="text-[11px] font-semibold text-ink-900 mt-1.5">eAuction</div>
+              <div class="text-[9px] font-mono text-brand-900 uppercase tracking-wider mt-0.5">live</div>
+            </div>
+            <div class="flex flex-col items-center">
+              <div class="w-6 h-6 rounded-full bg-white hairline"></div>
+              <div class="text-[11px] font-medium text-ink-400 mt-2">Award</div>
+              <div class="text-[9px] font-mono text-ink-300 uppercase tracking-wider mt-0.5">draft</div>
+            </div>
+            <div class="flex flex-col items-center">
+              <div class="w-6 h-6 rounded-full bg-white hairline"></div>
+              <div class="text-[11px] font-medium text-ink-400 mt-2">Contract</div>
+              <div class="text-[9px] font-mono text-ink-300 uppercase tracking-wider mt-0.5">draft</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="bg-white rounded-lg hairline p-4">
+          <div class="text-[10px] uppercase tracking-wider font-mono text-ink-500">Add an event</div>
+          <div class="text-[13px] font-semibold mt-1 text-ink-900">"+ New event" from the project page</div>
+          <div class="text-[11px] text-ink-500 mt-1">Pick a type, configure it. Lives in <span class="font-mono">/projects/&lt;id&gt;/events/&lt;eventId&gt;</span>.</div>
+        </div>
+        <div class="bg-white rounded-lg hairline p-4">
+          <div class="text-[10px] uppercase tracking-wider font-mono text-ink-500">Close the loop</div>
+          <div class="text-[13px] font-semibold mt-1 text-ink-900">Last event closed → Completed</div>
+          <div class="text-[11px] text-ink-500 mt-1">Whichever event you finish last closes the project — contract isn't required.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 10 · LIVE DEMO ====== -->
+<section id="demo" class="slide max-w-7xl mx-auto px-6 py-16" data-slide="11">
+  <div class="flex items-baseline justify-between mb-8">
+    <div>
+      <div class="text-[10px] uppercase tracking-[0.2em] text-ink-400 font-mono">09 · Live demo</div>
+      <h2 class="text-3xl font-bold tracking-tight mt-1">Now let's build one — together</h2>
+      <p class="text-ink-500 mt-3 max-w-2xl text-[14px]">
+        We open <span class="font-mono text-ink-900">demo.crown-procurement.com</span> and create a small Kiabi sourcing project from scratch. Same fields, same events you've just seen on the slides — but live.
+      </p>
+    </div>
+    <span class="inline-flex items-center px-3 py-1 rounded-md text-[11px] font-medium bg-brand text-white font-mono uppercase tracking-wider">Hands on</span>
+  </div>
+
+  <!-- Two-column: project + events -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+    <!-- THE PROJECT -->
+    <div class="bg-white rounded-xl hairline p-6">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono uppercase tracking-wider" style="background:#E6007E;color:#fff">Kiabi</span>
+        <span class="text-[10px] font-mono uppercase tracking-wider text-ink-500">The project</span>
+      </div>
+      <div class="text-[20px] font-semibold mt-2 text-ink-900 leading-tight">Kraft paper carrier bags<br/><span class="text-ink-500 text-[16px] font-medium">2026 store supply · 1 SKU · with handle</span></div>
+      <div class="text-[12px] text-ink-500 mt-3 leading-relaxed">A simple indirect-packaging basket — the kind of small recurring buy Kiabi runs every year for every store. Single SKU, clean comparison, easy to award.</div>
+
+      <div class="mt-5 grid grid-cols-2 gap-2 text-[12px]">
+        <div class="bg-paper rounded p-2.5 hairline"><div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Category</div><div class="font-semibold mt-0.5">Indirect</div></div>
+        <div class="bg-paper rounded p-2.5 hairline"><div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Sub-category</div><div class="font-semibold mt-0.5">Packaging</div></div>
+        <div class="bg-paper rounded p-2.5 hairline"><div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Spend</div><div class="font-semibold mt-0.5 num">~€720,000 / yr</div></div>
+        <div class="bg-paper rounded p-2.5 hairline"><div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Currency</div><div class="font-semibold mt-0.5 font-mono">EUR</div></div>
+      </div>
+
+      <div class="mt-3 bg-paper rounded p-2.5 hairline flex items-center justify-between">
+        <div class="text-[9px] font-mono uppercase tracking-wider text-ink-500">Suppliers invited</div>
+        <div class="text-[14px] font-semibold num">4</div>
+      </div>
+    </div>
+
+    <!-- THE EVENTS -->
+    <div class="bg-white rounded-xl hairline p-6">
+      <div class="text-[10px] font-mono uppercase tracking-wider text-ink-500">The events we'll add · 5</div>
+      <div class="text-[20px] font-semibold mt-2 text-ink-900 leading-tight">Classic 5-event flow</div>
+
+      <div class="mt-5 space-y-2">
+        <div class="grid grid-cols-12 gap-2 items-center bg-paper rounded p-3 hairline">
+          <div class="col-span-1 text-[12px] font-mono text-ink-400 num">01</div>
+          <div class="col-span-3"><span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-brandBlue-100 text-brandBlue-700 font-mono uppercase tracking-wider">RFP</span></div>
+          <div class="col-span-8 text-[12px]"><span class="font-semibold text-ink-900">Collect price per 1,000 bags &amp; lead time</span> from the 4 suppliers (DDP store warehouse).</div>
+        </div>
+        <div class="grid grid-cols-12 gap-2 items-center bg-paper rounded p-3 hairline">
+          <div class="col-span-1 text-[12px] font-mono text-ink-400 num">02</div>
+          <div class="col-span-3"><span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-brandPurple-100 text-brandPurple-700 font-mono uppercase tracking-wider">Analysis</span></div>
+          <div class="col-span-8 text-[12px]"><span class="font-semibold text-ink-900">Weighted scoring</span> · Price 60 % · Delivery 25 % · Experience 15 %.</div>
+        </div>
+        <div class="grid grid-cols-12 gap-2 items-center bg-paper rounded p-3 hairline">
+          <div class="col-span-1 text-[12px] font-mono text-ink-400 num">03</div>
+          <div class="col-span-3"><span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-brand-100 text-brand-950 font-mono uppercase tracking-wider">eAuction · English</span></div>
+          <div class="col-span-8 text-[12px]"><span class="font-semibold text-ink-900">English live reverse auction</span> · ran live during the demo · shown from <span class="font-semibold text-ink-900">buyer view</span> &amp; <span class="font-semibold text-ink-900">supplier view</span> side by side.</div>
+        </div>
+        <div class="grid grid-cols-12 gap-2 items-center bg-paper rounded p-3 hairline">
+          <div class="col-span-1 text-[12px] font-mono text-ink-400 num">04</div>
+          <div class="col-span-3"><span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-brandYellow-100 text-brandYellow-600 font-mono uppercase tracking-wider">Award</span></div>
+          <div class="col-span-8 text-[12px]"><span class="font-semibold text-ink-900">Single supplier</span> · winning bidder takes the full volume.</div>
+        </div>
+        <div class="grid grid-cols-12 gap-2 items-center bg-paper rounded p-3 hairline">
+          <div class="col-span-1 text-[12px] font-mono text-ink-400 num">05</div>
+          <div class="col-span-3"><span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-brandPurple-100 text-brandPurple-700 font-mono uppercase tracking-wider">Contract</span></div>
+          <div class="col-span-8 text-[12px]"><span class="font-semibold text-ink-900">Pre-filled from the award</span>, signed externally, uploaded back.</div>
+        </div>
+      </div>
+
+      <!-- Live highlight · auction dual view -->
+      <div class="mt-5">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-brand-900 font-mono mb-2">Live highlight · the part everyone watches</div>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="rounded-lg p-4 hairline-dark bg-white">
+            <div class="text-[10px] uppercase tracking-wider font-mono text-ink-500">Buyer view</div>
+            <div class="text-[16px] font-bold mt-1 text-ink-900 leading-tight">Run &amp; monitor</div>
+            <div class="text-[11px] text-ink-600 mt-1">See all bidders, ranking, bid history.</div>
+          </div>
+          <div class="rounded-lg p-4 hairline-dark bg-white">
+            <div class="text-[10px] uppercase tracking-wider font-mono text-ink-500">Supplier view</div>
+            <div class="text-[16px] font-bold mt-1 text-ink-900 leading-tight">Bid &amp; see own rank</div>
+            <div class="text-[11px] text-ink-600 mt-1">No competitor names — only own rank + best price.</div>
+          </div>
+        </div>
+        <div class="text-[11px] text-ink-500 mt-2 italic">Both views shown side by side on screen.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What we'll click strip -->
+  <div class="mt-4 bg-ink-900 text-white rounded-xl p-6 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+    <div class="lg:col-span-7">
+      <div class="text-[10px] uppercase tracking-[0.2em] text-brand font-mono">What we'll click on screen</div>
+      <div class="text-[16px] font-semibold mt-2 leading-tight">Login as Buyer → /projects → "New project" → Steps 1·2·3 → "+ New event" → configure the RFQ → invite suppliers → set up an <span class="text-brand">English auction</span> → run it live, side by side as <span class="text-brand">buyer + supplier</span></div>
+    </div>
+    <div class="lg:col-span-5">
+      <a href="https://demo.crown-procurement.com/" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand text-ink-900 text-[13px] font-semibold hover:bg-brand-600 transition">
+        Open demo.crown-procurement.com
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 11 · Q&A ====== -->
+<section id="qa" class="slide bg-white border-t-2 border-b-2 border-ink-900" data-slide="12">
+  <div class="max-w-7xl mx-auto px-6 py-20">
+    <div class="text-center">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-100 text-brand-950 text-[11px] font-mono uppercase tracking-wider">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand pulse"></span>
+        10 · Q&amp;A
+      </div>
+      <h2 class="text-4xl lg:text-[56px] font-bold tracking-tight mt-6 text-balance">
+        Your turn.<br/>
+        <span class="text-brand">Questions, gaps, what's missing.</span>
+      </h2>
+      <p class="text-ink-500 mt-6 max-w-2xl mx-auto text-[14px] leading-relaxed">
+        Anything we should clarify before we ship this to a real client?
+      </p>
+
+      <!-- Prompt cards -->
+      <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-3 max-w-4xl mx-auto text-left">
+        <div class="bg-paper rounded-xl hairline p-5">
+          <div class="text-[10px] uppercase tracking-wider font-mono text-ink-500">Users</div>
+          <div class="text-[13px] font-semibold mt-2 text-ink-900">Roles, permissions, edge cases</div>
+          <div class="text-[11px] text-ink-500 mt-1.5 leading-relaxed">"Can a Director see another category?" · "What happens if a Buyer leaves?" · "How does the supplier register?"</div>
+        </div>
+        <div class="bg-paper rounded-xl hairline p-5">
+          <div class="text-[10px] uppercase tracking-wider font-mono text-ink-500">Projects</div>
+          <div class="text-[13px] font-semibold mt-2 text-ink-900">Events, lifecycle, what's missing</div>
+          <div class="text-[11px] text-ink-500 mt-1.5 leading-relaxed">"Can I run 2 RFXs in one project?" · "What about a Cahier des charges?" · "Can we split an Award by % rather than per lot?"</div>
+        </div>
+        <div class="bg-paper rounded-xl hairline p-5">
+          <div class="text-[10px] uppercase tracking-wider font-mono text-ink-500">Next steps</div>
+          <div class="text-[13px] font-semibold mt-2 text-ink-900">What we'll demo to which client first</div>
+          <div class="text-[11px] text-ink-500 mt-1.5 leading-relaxed">Who's the first target after this internal walkthrough? What feedback do we need to capture?</div>
+        </div>
+      </div>
+
+      <div class="mt-10 flex flex-wrap justify-center gap-3">
+        <a href="https://demo.crown-procurement.com/" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-ink-900 text-white text-[13px] font-medium hover:bg-ink-800 transition">
+          Re-open the live demo
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </a>
+        <a href="#summary" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-[13px] font-medium text-ink-800 hairline hover:bg-paper transition">
+          Back to summary
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== SLIDE CONTROLS ====== -->
+<div class="slide-controls">
+  <button id="prevSlide" aria-label="Previous">◀ Prev</button>
+  <span id="slideCounter">1 / 10</span>
+  <button id="nextSlide" aria-label="Next">Next ▶</button>
+  <span class="opacity-60 ml-2">F · Esc · ← →</span>
+</div>
+
+<script>
+(function () {
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const counter = document.getElementById('slideCounter');
+  const prevBtn = document.getElementById('prevSlide');
+  const nextBtn = document.getElementById('nextSlide');
+  const toggleBtn = document.getElementById('slideToggle');
+  let current = 0;
+
+  function render() {
+    slides.forEach((s, i) => s.classList.toggle('active', i === current));
+    counter.textContent = `${current + 1} / ${slides.length}`;
+    if (document.body.classList.contains('slide-mode')) {
+      slides[current].scrollIntoView({ block: 'start' });
+    }
+  }
+  function next() { current = (current + 1) % slides.length; render(); }
+  function prev() { current = (current - 1 + slides.length) % slides.length; render(); }
+  function toggleSlideMode() {
+    document.body.classList.toggle('slide-mode');
+    if (!document.body.classList.contains('slide-mode')) {
+      slides.forEach(s => s.classList.add('active'));
+    } else {
+      render();
+    }
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'f' || e.key === 'F') { toggleSlideMode(); }
+    if (e.key === 'Escape' && document.body.classList.contains('slide-mode')) { toggleSlideMode(); }
+    if (!document.body.classList.contains('slide-mode')) return;
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { next(); e.preventDefault(); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { prev(); e.preventDefault(); }
+  });
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+  toggleBtn.addEventListener('click', toggleSlideMode);
+
+})();
+</script>
+
+</body>
+</html>
